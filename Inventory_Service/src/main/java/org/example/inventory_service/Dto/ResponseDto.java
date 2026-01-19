@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -25,9 +26,9 @@ public class ResponseDto {
     private int economySeats;
     private int businessSeats;
 
-    private double economyPrice;
-    private double businessPrice;
+    private BigDecimal economyPrice;
 
+    private BigDecimal businessPrice;
     private Date createdAt;
     private Date updatedAt;
 

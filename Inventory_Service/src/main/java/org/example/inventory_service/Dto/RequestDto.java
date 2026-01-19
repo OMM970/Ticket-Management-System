@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 @Data
 @AllArgsConstructor
@@ -21,6 +22,7 @@ public class RequestDto {
     private int economySeats;
     private int businessSeats;
 
-    private double economyPrice;
-    private double businessPrice;
+    private BigDecimal economyPrice;
+
+    private BigDecimal businessPrice;
 }

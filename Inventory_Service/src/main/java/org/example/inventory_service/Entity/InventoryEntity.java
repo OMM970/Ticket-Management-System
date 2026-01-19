@@ -1,10 +1,7 @@
 package org.example.inventory_service.Entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +35,7 @@ public class InventoryEntity {
     private String destination;
 
     @Column(name = "flight_Date")
+    @Temporal(TemporalType.DATE)
     private LocalDate flightDate;
 
     @Column(name = "econnomy_seats")
@@ -45,11 +44,11 @@ public class InventoryEntity {
     @Column(name = "business_seats")
     private int businessSeats;
 
-    @Column(name = "economy_price")
-    private double economyPrice;
+    @Column(name = "economy_price", precision = 10, scale = 2, nullable = false)
+    private BigDecimal economyPrice;
 
-    @Column(name = "business_price")
-    private double businessPrice;
+    @Column(name = "business_price", precision = 10, scale = 2, nullable = false)
+    private BigDecimal businessPrice;
 
     @CreationTimestamp
     @Column(updatable = false)
