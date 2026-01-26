@@ -8,11 +8,15 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Inventory_Service" />
+        <module name="Gateway" />
+        <module name="CustomerManagementService" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="CustomerManagementService" options="-parameters" />
+      <module name="Gateway" options="-parameters" />
       <module name="Inventory_Service" options="-parameters" />
     </option>
   </component>
