@@ -12,5 +12,7 @@ import java.util.Optional;
 public interface Customer_Repo extends JpaRepository<CustomerEntity,Integer>, JpaSpecificationExecutor<CustomerEntity> {
     Optional<CustomerEntity> findByEmail(String email);
 
+    Optional<CustomerEntity> findById(Long id);
+
 
 }

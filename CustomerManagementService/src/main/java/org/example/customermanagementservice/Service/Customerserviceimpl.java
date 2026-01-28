@@ -4,9 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.customermanagementservice.Config.Security;
 import org.example.customermanagementservice.Dto.CustomerReqDto;
 import org.example.customermanagementservice.Dto.CustomerResDto;
+import org.example.customermanagementservice.Dto.Events.Eventmaker;
 import org.example.customermanagementservice.Dto.LoginReqDto;
 import org.example.customermanagementservice.Dto.LoginResDto;
 import org.example.customermanagementservice.Entity.CustomerEntity;
+import org.example.customermanagementservice.Exception.CoustomerNotFound;
+import org.example.customermanagementservice.Exception.PasswordErrorException;
+import org.example.customermanagementservice.Kafka.KafkaSender;
 import org.example.customermanagementservice.Repository.Customer_Repo;
 import org.example.customermanagementservice.Security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +25,7 @@ public class Customerserviceimpl implements Customerservice {
     private final Customer_Repo customerRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final KafkaSender kafkaSender;
 
     @Override
     public CustomerResDto maptoDto(CustomerEntity customerEntity) {
@@ -46,6 +51,12 @@ public class Customerserviceimpl implements Customerservice {
                 .phoneNumber(customerReqDto.getPhoneNumber())
                 .type(customerReqDto.getType()).build();
         customerEntity = customerRepo.save(customerEntity);
+        Eventmaker eventmaker = Eventmaker.builder()
+                .email(customerEntity.getEmail())
+                .customerId(String.valueOf(customerEntity.getId()))
+                .firstname(customerEntity.getFirstName())
+                .build();
+        kafkaSender.sendEvent(eventmaker);
         return maptoDto(customerEntity);
 
     }
@@ -53,9 +64,9 @@ public class Customerserviceimpl implements Customerservice {
     @Override
     public LoginResDto loginCustomer(LoginReqDto loginReqDto) {
         CustomerEntity customer = customerRepo.findByEmail(loginReqDto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new CoustomerNotFound("Coustomer not found"));
         if (!passwordEncoder.matches(loginReqDto.getPassword(), customer.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new PasswordErrorException("Invalid Password");
         }
         String token = jwtUtil.generateToken(
                 customer.getId(),
@@ -67,6 +78,13 @@ public class Customerserviceimpl implements Customerservice {
                 token,
                 "Welcome to Ticket Manager"
         );
+    }
+
+    @Override
+    public CustomerResDto getCustomerById(Long id) {
+        CustomerEntity customer=customerRepo.findById(id)
+                .orElseThrow(()->new CoustomerNotFound("Customer not found"));
+        return maptoDto(customer);
     }
 
 

@@ -12,4 +12,6 @@ public interface Customerservice {
     CustomerResDto registerCustomer(CustomerReqDto customerReqDto);
 
     LoginResDto loginCustomer(LoginReqDto loginReqDto);
+
+    public CustomerResDto getCustomerById(Long id);
 }
