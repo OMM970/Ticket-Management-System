@@ -55,3 +55,77 @@ The application follows a **microservices architecture**, enabling loose couplin
 ---
 
 ## 📂 Project Structure
+flight-ticket-management/
+│
+├── user-service/
+├── flight-service/
+├── booking-service/
+├── notification-service/
+├── docker-compose.yml
+└── README.md
+
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone the Repository
+git clone https://github.com/your-username/flight-ticket-management.git
+cd flight-ticket-management
+2️⃣ Configure Application Properties
+
+Update the following configurations in each microservice:
+
+Database URL, username, and password
+
+Kafka broker configuration
+
+SMTP email credentials
+
+JWT secret key
+
+🐳 Docker Deployment
+Build all services
+mvn clean package
+Run the application using Docker Compose
+docker-compose up -d
+
+All microservices will start automatically in detached mode.
+
+📬 Kafka Event Flow (Notification Example)
+
+Customer registers successfully
+
+User Service publishes an event to Kafka
+
+Notification Service consumes the event
+
+Notification data is stored in MongoDB
+
+Email notification is sent to the customer
+
+🔐 Security
+
+JWT-based authentication
+
+Spring Security for API protection
+
+Secured endpoints for authorized users only
+
+📈 Future Enhancements
+
+API Gateway implementation
+
+Service discovery using Eureka
+
+Payment gateway integration
+
+Frontend using React or Angular
+
+Admin dashboard for flight and booking management
+
+👨‍💻 Author
+
+Om Narayan Mishra
+B.Tech – Electrical & Electronics Engineering
+Silicon University
