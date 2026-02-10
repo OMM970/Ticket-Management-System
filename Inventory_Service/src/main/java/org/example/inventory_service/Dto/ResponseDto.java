@@ -24,7 +24,11 @@ public class ResponseDto {
     private LocalDate flightDate;
 
     private int economySeats;
+    private int economyAvailable;
+
+
     private int businessSeats;
+    private int businessAvailable;
 
     private BigDecimal economyPrice;
 

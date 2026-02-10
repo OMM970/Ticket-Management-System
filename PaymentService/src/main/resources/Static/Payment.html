@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Local Payment</title>
+
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+        button {
+            background: #3399cc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Pay for Booking</h2>
+    <p>Local Razorpay Test</p>
+    <button id="payBtn">Pay Now</button>
+</div>
+
+<script>
+    document.getElementById("payBtn").onclick = async function () {
+
+        try {
+            // 🔹 STEP 1: Call local backend initiate API
+            const response = await fetch(
+                "http://localhost:8080/payments/initiate",
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer  eyJhbGciOiJIUzI1NiJ9.eyJib29raW5nSWQiOiI1YWM0NTFhYi0zNTBhLTRmNjctYjJmYy1iYWQ3NjQyMTE1OGQiLCJ1c2VySWQiOiJVU1IxMjM0NTg5ODk3ODk4NDU1MjQ0NTU0NDQ2Nzg3OCIsImFtb3VudCI6ODI2MC4wMCwiaWF0IjoxNzcwMzEwODY5LCJleHAiOjE3NzAzMTE0Njl9.maj2k8aB_eZkiUYp9oCIbBuvrkljW55x9fpVCyxmtkM"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to initiate payment");
+            }
+
+            const data = await response.json();
+
+            console.log("Order created:", data);
+
+            // 🔹 STEP 2: Open Razorpay Checkout UI
+            const options = {
+                key: data.key,                 // rzp_test_...
+                amount: data.amount,           // in paise
+                currency: data.currency,
+                order_id: data.orderId,
+                name: "Local Booking",
+                description: "Test Payment",
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+        } catch (err) {
+            alert("Payment initiation failed");
+            console.error(err);
+        }
+    };
+</script>
+
+</body>
+</html>

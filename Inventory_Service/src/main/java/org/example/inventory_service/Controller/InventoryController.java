@@ -1,6 +1,7 @@
 package org.example.inventory_service.Controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.inventory_service.Dto.HoldSeatRequestDto;
 import org.example.inventory_service.Dto.PageResponse;
 import org.example.inventory_service.Dto.RequestDto;
 import org.example.inventory_service.Dto.ResponseDto;
@@ -71,7 +72,7 @@ public class InventoryController {
 
 
 
-    @PostMapping("/upload")
+        @PostMapping("/upload")
     public ResponseEntity<String> bulkUpload(
             @RequestParam("file") MultipartFile file) {
 
@@ -80,4 +81,54 @@ public class InventoryController {
                 .status(HttpStatus.CREATED)
                 .body("Inventory uploaded successfully");
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseDto> getInventoryById(@PathVariable Integer id) {
+        return ResponseEntity.ok().body(inventoryService.findbyflightbyid(id));    }
+
+    @PostMapping("/hold")
+    public ResponseEntity<String> holdSeats(
+            @RequestBody HoldSeatRequestDto request) {
+
+        inventoryService.holdSeats(
+                request.getFlightId(),
+                request.getSeatType(),
+                request.getSeats(),
+                request.getIdempotencyKey()
+        );
+
+        return ResponseEntity.ok("Seats held successfully");
+    }
+
+
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmSeats(
+            @RequestBody HoldSeatRequestDto request) {
+
+        inventoryService.confirmSeats(
+                request.getFlightId(),
+                request.getSeatType(),
+                request.getSeats(),
+                request.getIdempotencyKey()
+        );
+
+        return ResponseEntity.ok("Seats confirmed");
+    }
+
+
+
+    @PostMapping("/release")
+    public ResponseEntity<String> releaseSeats(
+            @RequestBody HoldSeatRequestDto request) {
+
+        inventoryService.releaseSeats(
+                request.getFlightId(),
+                request.getSeatType(),
+                request.getSeats(),
+                request.getIdempotencyKey()
+        );
+
+        return ResponseEntity.ok("Seats released");
+    }
+
 }

@@ -39,10 +39,10 @@ public class InventoryEntity {
     private LocalDate flightDate;
 
     @Column(name = "econnomy_seats")
-    private int economySeats;
+    private Integer economySeats;
 
     @Column(name = "business_seats")
-    private int businessSeats;
+    private Integer businessSeats;
 
     @Column(name = "economy_price", precision = 10, scale = 2, nullable = false)
     private BigDecimal economyPrice;
@@ -58,6 +58,26 @@ public class InventoryEntity {
     @UpdateTimestamp
     @JsonFormat(pattern = "dd-MM-yyyy")
     private Date updatedAt;
+
+
+    @Column(name = "economy_available_seats")
+    private Integer economyAvailable=0;
+
+    @Column(name = "econmy_held_seats")
+    private Integer economyHeld=0;
+
+    @Column(name = "econmy_booked_seats")
+    private Integer economyBooked=0;
+
+    @Column(name = "business_available_seats")
+    private Integer businessAvailable=0;
+
+    @Column(name = "business_held_seats")
+    private Integer businessHeld=0;
+
+
+    @Column(name = "business_booked_seats")
+    private Integer businessBooked=0;
 
 
 

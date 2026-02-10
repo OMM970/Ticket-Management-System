@@ -24,4 +24,29 @@ public interface InventoryService {
             Pageable pageable);
 
     void bulkImport(MultipartFile file);
+
+    ResponseDto findbyflightbyid(Integer id);
+
+    void releaseSeats(
+            String flightId,
+            String seatType,
+            int seats,
+            String idempotencyKey
+    );
+
+     void confirmSeats(
+            String flightId,
+            String seatType,
+            int seats,
+            String idempotencyKey
+    );
+
+    void holdSeats(
+            String flightId,
+            String seatType,
+            int seats,
+            String idempotencyKey
+    );
+
+
 }

@@ -11,7 +11,7 @@
         <module name="Gateway" />
         <module name="CustomerManagementService" />
       </profile>
-      <profile name="Annotation profile for notification-service" enabled="true">
+      <profile name="Annotation profile for booking-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -19,15 +19,27 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
         <module name="Notification-Service" />
+        <module name="BookingService" />
+      </profile>
+      <profile name="Annotation profile for PaymentService" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+        </processorPath>
+        <module name="PaymentService" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="BookingService" options="-parameters" />
       <module name="CustomerManagementService" options="-parameters" />
       <module name="Gateway" options="-parameters" />
       <module name="Inventory_Service" options="-parameters" />
       <module name="Notification-Service" options="-parameters" />
+      <module name="PaymentService" options="-parameters" />
     </option>
   </component>
 </project>
