@@ -1,4 +1,4 @@
-# ✈️ Flight Ticket Management System(Web link - "https://todo-full-stack-jl92.onrender.com/")
+# ✈️ Flight Ticket Management System
 
 A scalable **Flight Ticket Management System** built using **Spring Boot Microservices Architecture**.  
 The system supports customer registration, flight booking, and asynchronous notifications using **Apache Kafka**, with **Docker-based deployment** for easy scalability.
