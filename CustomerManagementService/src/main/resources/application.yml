@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: CustomerManagementService
+  datasource:
+    url: jdbc:postgresql://localhost:5432/customer_service_FMS
+    password: root
+    username: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+server:
+  port: 8083
+jwt:
+  secret: Q2hhbmdlVGhpc0pXVFNlY3JldEtleVRvQmVBdExlYXN0NjRCeXRlc0xvbmdBbmRTZWN1cmU=
+  expiration-ms: 86400000

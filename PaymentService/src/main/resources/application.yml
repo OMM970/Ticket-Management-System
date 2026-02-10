@@ -1,0 +1,21 @@
+  spring:
+    application:
+      name: payment-servcie
+    mongodb:
+      host: localhost
+      port: 27017
+      database: payment_db
+
+  jwt:
+    payment:
+      secret: 120a815e74a9edf768ac8db1bf0de298ab694cf9b922afc45551eac4e0e7fd7a
+      expiry-minutes: 10
+  razorpay:
+    key:
+      id: rzp_test_SBl5pNPeUJbzNv
+      secret: MGxKBmVNt0yHYLlpzW3ZZBvq
+    webhook:
+      secret: 6jkn7UdgY9h@gWB
+  server:
+    port: 8080
+    address: 0.0.0.0

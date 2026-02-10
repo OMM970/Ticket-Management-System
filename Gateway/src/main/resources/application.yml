@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: gateway
+
+server:
+  port: 2000
+
+jwt:
+  secret: Q2hhbmdlVGhpc0pXVFNlY3JldEtleVRvQmVBdExlYXN0NjRCeXRlc0xvbmdBbmRTZWN1cmU=
+
+services:
+  routes:
+    inventory: http://localhost:9090
+    customer: http://localhost:8083
