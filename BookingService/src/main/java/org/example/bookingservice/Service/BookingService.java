@@ -3,8 +3,8 @@ package org.example.bookingservice.Service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.example.bookingservice.Dto.BookingResponseDto;
-import org.example.bookingservice.Dto.Feign.HoldSeatRequest;
 import org.example.bookingservice.Dto.Feign.InventoryResponseDto;
+import org.example.bookingservice.Dto.Feign.SeatsActionDto;
 import org.example.bookingservice.Dto.RequestDto;
 import org.example.bookingservice.Entity.BookingEntity;
 import org.example.bookingservice.Enums.BookingStatus;
@@ -23,8 +23,8 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final InventoryService inventoryClient;
     private final PaymentUtil paymentUtil;
-    private final LockService lockService;
 
+    // 🔥 LockService removed
 
 
 
@@ -32,72 +32,53 @@ public class BookingService {
 
         String idempotencyKey = UUID.randomUUID().toString();
 
-        String lockKey = "LOCK:flight:" +
-                requestDto.getFlightId() + ":" +
-                requestDto.getSeatsType();
+        // 1️⃣ Fetch latest inventory
+        InventoryResponseDto inventory =
+                inventoryClient.getInventoryById(requestDto.getFlightId());
 
-        boolean locked = lockService.acquireLock(
-                lockKey,
-                idempotencyKey,
-                45
+        // 2️⃣ Calculate total amount
+        BigDecimal totalAmount = calculateTotalAmount(
+                inventory,
+                requestDto.getSeatsType().name(),
+                requestDto.getSeats()
         );
 
-        if (!locked) {
-            throw new IllegalStateException(
-                    "Seats are currently being booked, please try again"
-            );
-        }
+        // 3️⃣ Call Inventory to HOLD seats
+        SeatsActionDto holdSeatRequest =
+                new SeatsActionDto(
+                        Math.toIntExact(requestDto.getFlightId()),
+                        requestDto.getSeatNumbers(),
+                        idempotencyKey   // 🔥 use idempotencyKey as holdBy
+                );
 
-        try {
-            // 1️⃣ Fetch latest inventory
-            InventoryResponseDto inventory =
-                    inventoryClient.getInventoryById(requestDto.getFlightId());
+        inventoryClient.holdSeats(holdSeatRequest);
 
-            // 2️⃣ Calculate total amount
-            BigDecimal totalAmount = calculateTotalAmount(
-                    inventory,
-                    requestDto.getSeatsType().name(),
-                    requestDto.getSeats()
-            );
-            HoldSeatRequest holdSeatRequest =
-                    new HoldSeatRequest(
-                            requestDto.getFlightId().toString(),
-                            requestDto.getSeatsType().name(), // enum → string
-                            requestDto.getSeats(),
-                            idempotencyKey
-                    );
+        // 4️⃣ Create booking (CREATED)
+        BookingEntity booking = BookingEntity.builder()
+                .flightId(Math.toIntExact(requestDto.getFlightId()))
+                .idempotencyKey(idempotencyKey)
+                .userId(requestDto.getUserId())
+                .userEmail(requestDto.getUserEmail())
+                .bookingDate(requestDto.getBookingDate())
+                .seats(requestDto.getSeats())
+                .seatType(requestDto.getSeatsType())
+                .seatNumbers(requestDto.getSeatNumbers())
+                .amount(totalAmount)
+                .status(BookingStatus.CREATED)
+                .build();
 
+        // 5️⃣ SAVE to Mongo
+        bookingRepository.save(booking);
 
-            inventoryClient.holdSeats(holdSeatRequest);
+        // 6️⃣ Generate payment token
+        String paymentToken = paymentUtil.generateToken(
+                idempotencyKey,
+                booking.getUserId(),
+                totalAmount,
+                booking.getBookingId()
+        );
 
-            // 4️⃣ Create booking (CREATED)
-            BookingEntity booking = BookingEntity.builder()
-                    .idempotencyKey(idempotencyKey)
-                    .userId(requestDto.getUserId())
-                    .userEmail(requestDto.getUserEmail())
-                    .bookingDate(requestDto.getBookingDate())
-                    .seats(requestDto.getSeats())
-                    .seatType(requestDto.getSeatsType())
-                    .amount(totalAmount)
-                    .status(BookingStatus.CREATED)
-                    .build();
-
-            // 5️⃣ SAVE to Mongo (SOURCE OF TRUTH)
-            bookingRepository.save(booking);
-
-            // 6️⃣ Generate payment token
-            String paymentToken = paymentUtil.generateToken(
-                    idempotencyKey,
-                    booking.getUserId(),
-                    totalAmount
-            );
-
-            return mapToDto(booking, paymentToken);
-
-        } finally {
-            // 🔓 ALWAYS release lock
-            lockService.releaseLock(lockKey, idempotencyKey);
-        }
+        return mapToDto(booking, paymentToken);
     }
 
 
@@ -113,13 +94,23 @@ public class BookingService {
             return mapToDto(booking, null);
         }
 
+        // 🔥 Call inventory FIRST
+        SeatsActionDto confirmRequest =
+                new SeatsActionDto(
+                        Math.toIntExact(booking.getFlightId()),
+                        booking.getSeatNumbers(),
+                        booking.getIdempotencyKey()
+                );
+
+        inventoryClient.confirmSeats(confirmRequest);
+
+        // 🔥 Only after inventory success → update booking
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
 
         return mapToDto(booking, null);
     }
 
-    /* ---------------- HELPERS ---------------- */
 
     private BookingResponseDto mapToDto(
             BookingEntity booking,

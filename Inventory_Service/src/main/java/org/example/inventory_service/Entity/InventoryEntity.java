@@ -59,26 +59,23 @@ public class InventoryEntity {
     @JsonFormat(pattern = "dd-MM-yyyy")
     private Date updatedAt;
 
-
     @Column(name = "economy_available_seats")
-    private Integer economyAvailable=0;
+    private Integer economyAvailable;
 
     @Column(name = "econmy_held_seats")
-    private Integer economyHeld=0;
+    private Integer economyHeld;
 
     @Column(name = "econmy_booked_seats")
-    private Integer economyBooked=0;
+    private Integer economyBooked;
 
     @Column(name = "business_available_seats")
-    private Integer businessAvailable=0;
+    private Integer businessAvailable;
 
     @Column(name = "business_held_seats")
-    private Integer businessHeld=0;
-
+    private Integer businessHeld;
 
     @Column(name = "business_booked_seats")
-    private Integer businessBooked=0;
-
+    private Integer businessBooked;
 
 
 }

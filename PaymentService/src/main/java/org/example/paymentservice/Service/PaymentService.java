@@ -10,6 +10,7 @@ import org.apache.commons.codec.digest.HmacUtils;
 import org.example.paymentservice.Dto.PaymentVerifyDto;
 import org.example.paymentservice.Entity.PaymentEntity;
 import org.example.paymentservice.Enums.Status;
+import org.example.paymentservice.Feign.BookingServiceClient;
 import org.example.paymentservice.Repository.PaymentRepo;
 import org.example.paymentservice.Utill.PaymentTokenUtil;
 import org.json.JSONObject;
@@ -28,6 +29,8 @@ public class PaymentService {
     private final RazorpayClient razorpayClient;
     private final PaymentTokenUtil tokenUtil;
     private final PaymentRepo paymentRepository;
+    private final BookingServiceClient bookingService;
+
 
     @Value("${razorpay.key.id}")
     private String razorpayKey;
@@ -43,6 +46,8 @@ public class PaymentService {
         String bookingId = claims.get("bookingId", String.class);
         String userId = claims.get("userId", String.class);
         Double amount = claims.get("amount", Double.class);
+        String idempotencyKey = claims.get("idopotencyKey", String.class);
+
 
         if (bookingId == null || userId == null || amount == null) {
             throw new IllegalArgumentException("Invalid payment token");
@@ -79,6 +84,7 @@ public class PaymentService {
                 .bookingId(bookingId)
                 .userId(userId)
                 .amount(amount)
+                .idempotencyKey(idempotencyKey)
                 .razorpayOrderId(order.get("id"))
                 .status(Status.valueOf("ORDER_CREATED"))
                 .build();
@@ -158,6 +164,7 @@ public class PaymentService {
         payment.setStatus(Status.SUCCESS);
         payment.setRazorpayPaymentId(razorpayPaymentId);
         paymentRepository.save(payment);
+        bookingService.confirmBooking(payment.getIdempotencyKey());
 
         log.info("✅ Payment marked SUCCESS for bookingId {}", payment.getBookingId());
     }

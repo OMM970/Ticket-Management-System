@@ -2,6 +2,7 @@ package org.example.inventory_service.Service;
 
 import org.example.inventory_service.Dto.RequestDto;
 import org.example.inventory_service.Dto.ResponseDto;
+import org.example.inventory_service.Dto.SeatsActionDto;
 import org.example.inventory_service.Entity.InventoryEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,24 +29,15 @@ public interface InventoryService {
     ResponseDto findbyflightbyid(Integer id);
 
     void releaseSeats(
-            String flightId,
-            String seatType,
-            int seats,
-            String idempotencyKey
+            SeatsActionDto dto
     );
 
      void confirmSeats(
-            String flightId,
-            String seatType,
-            int seats,
-            String idempotencyKey
+             SeatsActionDto dto
     );
 
     void holdSeats(
-            String flightId,
-            String seatType,
-            int seats,
-            String idempotencyKey
+            SeatsActionDto dto
     );
 
 

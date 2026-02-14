@@ -1,6 +1,6 @@
 spring:
   application:
-    name: bookingservice
+    name: booking-service
 
   data:
     mongodb:

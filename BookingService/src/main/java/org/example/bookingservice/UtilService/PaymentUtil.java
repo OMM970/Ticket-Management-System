@@ -18,12 +18,13 @@ public class PaymentUtil {
   @Value("${jwt.payment.expiry-minutes}")
     private int expiryMinutes;
 
-    public String generateToken(String idopotencyKey, String userId, BigDecimal amount) {
+    public String generateToken(String idopotencyKey, String userId, BigDecimal amount,String bookingId) {
 
         return Jwts.builder()
                 .claim("idopotencyKey", idopotencyKey)
                 .claim("userId", userId)
                 .claim("amount", amount)
+                .claim("bookingId", bookingId)
                 .setIssuedAt(new Date())
                 .setExpiration(
                         Date.from(

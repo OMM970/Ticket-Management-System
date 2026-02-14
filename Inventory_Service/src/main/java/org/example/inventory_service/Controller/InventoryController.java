@@ -1,10 +1,7 @@
 package org.example.inventory_service.Controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.inventory_service.Dto.HoldSeatRequestDto;
-import org.example.inventory_service.Dto.PageResponse;
-import org.example.inventory_service.Dto.RequestDto;
-import org.example.inventory_service.Dto.ResponseDto;
+import org.example.inventory_service.Dto.*;
 import org.example.inventory_service.Service.InventoryService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -88,14 +85,8 @@ public class InventoryController {
 
     @PostMapping("/hold")
     public ResponseEntity<String> holdSeats(
-            @RequestBody HoldSeatRequestDto request) {
-
-        inventoryService.holdSeats(
-                request.getFlightId(),
-                request.getSeatType(),
-                request.getSeats(),
-                request.getIdempotencyKey()
-        );
+            @RequestBody SeatsActionDto dto) {
+        inventoryService.holdSeats(dto);
 
         return ResponseEntity.ok("Seats held successfully");
     }
@@ -103,30 +94,20 @@ public class InventoryController {
 
     @PostMapping("/confirm")
     public ResponseEntity<String> confirmSeats(
-            @RequestBody HoldSeatRequestDto request) {
+            @RequestBody SeatsActionDto request) {
 
-        inventoryService.confirmSeats(
-                request.getFlightId(),
-                request.getSeatType(),
-                request.getSeats(),
-                request.getIdempotencyKey()
-        );
+        inventoryService.confirmSeats(request);
 
-        return ResponseEntity.ok("Seats confirmed");
+        return ResponseEntity.ok("Seats confirmed successfully");
     }
 
 
 
     @PostMapping("/release")
     public ResponseEntity<String> releaseSeats(
-            @RequestBody HoldSeatRequestDto request) {
+            @RequestBody SeatsActionDto dto) {
 
-        inventoryService.releaseSeats(
-                request.getFlightId(),
-                request.getSeatType(),
-                request.getSeats(),
-                request.getIdempotencyKey()
-        );
+        inventoryService.releaseSeats(dto);
 
         return ResponseEntity.ok("Seats released");
     }

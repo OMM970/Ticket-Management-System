@@ -8,8 +8,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.inventory_service.Dto.RequestDto;
 import org.example.inventory_service.Dto.ResponseDto;
+import org.example.inventory_service.Dto.SeatsActionDto;
 import org.example.inventory_service.Entity.InventoryEntity;
+import org.example.inventory_service.Entity.SeatEntity;
+import org.example.inventory_service.Enums.SeatStatus;
+import org.example.inventory_service.Enums.SeatsType;
 import org.example.inventory_service.Repository.InventoryRepo;
+import org.example.inventory_service.Repository.SeatsRepo;
 import org.example.inventory_service.Util.InventorySpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -29,9 +36,11 @@ import java.util.List;
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepo inventoryRepo;
+    private final SeatsRepo seatsRepo;
     private final RedisTemplate<String, String> redisTemplate;
+    private final SeatGenerationService seatGenerationService;
 
-    // ================= CREATE INVENTORY =================
+
 
     @Override
     public ResponseDto addToinventory(RequestDto requestDto) {
@@ -42,27 +51,26 @@ public class InventoryServiceImpl implements InventoryService {
                 .destination(requestDto.getDestination())
                 .flightDate(requestDto.getFlightDate())
 
-                // TOTAL
+
                 .economySeats(requestDto.getEconomySeats())
                 .businessSeats(requestDto.getBusinessSeats())
 
-                // AVAILABLE = TOTAL (INITIAL)
+
                 .economyAvailable(requestDto.getEconomySeats())
                 .businessAvailable(requestDto.getBusinessSeats())
 
-                // BOOKED = 0
+
                 .economyBooked(0)
                 .businessBooked(0)
 
                 .economyPrice(requestDto.getEconomyPrice())
                 .businessPrice(requestDto.getBusinessPrice())
                 .build();
-
-        inventoryRepo.save(entity);
-        return maptoinventoryResponseDto(entity);
+        InventoryEntity savedFlight = inventoryRepo.save(entity);
+        createSeatsForFlight(savedFlight);
+        return maptoinventoryResponseDto(savedFlight);
     }
 
-    // ================= RESPONSE MAPPER =================
 
     @Override
     public ResponseDto maptoinventoryResponseDto(InventoryEntity entity) {
@@ -74,14 +82,18 @@ public class InventoryServiceImpl implements InventoryService {
                 .flightDate(entity.getFlightDate())
                 .economySeats(entity.getEconomySeats())
                 .businessSeats(entity.getBusinessSeats())
+                .businessAvailable(entity.getBusinessAvailable())
+                .economyAvailable(entity.getEconomyAvailable())
                 .economyPrice(entity.getEconomyPrice())
                 .businessPrice(entity.getBusinessPrice())
+                .businessBooked(entity.getBusinessBooked())
+                .economyBooked(entity.getEconomyBooked())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
-    // ================= SEARCH =================
+
 
     @Override
     public Page<ResponseDto> getAllInventory(
@@ -98,9 +110,8 @@ public class InventoryServiceImpl implements InventoryService {
                 .map(this::maptoinventoryResponseDto);
     }
 
-    // ================= BULK IMPORT =================
 
-    @Transactional
+
     @Override
     public void bulkImport(MultipartFile file) {
 
@@ -111,7 +122,7 @@ public class InventoryServiceImpl implements InventoryService {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            List<InventoryEntity> batch = new ArrayList<>(500);
+            List<InventoryEntity> batch = new ArrayList<>(100);
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 
@@ -130,10 +141,8 @@ public class InventoryServiceImpl implements InventoryService {
                         .economySeats(ecoTotal)
                         .businessSeats(busTotal)
 
-
                         .economyAvailable(ecoTotal)
                         .businessAvailable(busTotal)
-
 
                         .economyBooked(0)
                         .businessBooked(0)
@@ -144,14 +153,32 @@ public class InventoryServiceImpl implements InventoryService {
 
                 batch.add(entity);
 
-                if (batch.size() == 500) {
-                    inventoryRepo.saveAll(batch);
+
+                if (batch.size() == 100) {
+
+                    List<InventoryEntity> savedFlights = inventoryRepo.saveAll(batch);
+
+                    System.out.println("Saved batch of " + savedFlights.size() + " flights");
+
+
+                    for (InventoryEntity flight : savedFlights) {
+                        seatGenerationService.generateSeatsForFlight(flight);
+                    }
+
                     batch.clear();
                 }
             }
 
+            // Save remaining
             if (!batch.isEmpty()) {
-                inventoryRepo.saveAll(batch);
+
+                List<InventoryEntity> savedFlights = inventoryRepo.saveAll(batch);
+
+                System.out.println("Saved final batch of " + savedFlights.size() + " flights");
+
+                for (InventoryEntity flight : savedFlights) {
+                    seatGenerationService.generateSeatsForFlight(flight);
+                }
             }
 
         } catch (Exception e) {
@@ -159,7 +186,8 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    // ================= FIND =================
+
+
 
     @Override
     public ResponseDto findbyflightbyid(Integer id) {
@@ -167,97 +195,205 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new RuntimeException("Flight not found"));
         return maptoinventoryResponseDto(entity);
     }
-
-    // ================= HOLD SEATS =================
-
     @Transactional
     @Override
-    public void holdSeats(String flightId, String seatType, int seats, String idempotencyKey) {
+    public void holdSeats(SeatsActionDto dto) {
 
-        InventoryEntity inv = inventoryRepo.findById(Integer.valueOf(flightId))
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+        Integer flightId = dto.getFlightId();
+        List<String> seatNumbers = new ArrayList<>(dto.getSeatNumbers());
+        String bookingId = dto.getHoldBy();
 
-        switch (seatType.toUpperCase()) {
+        LocalDateTime now = LocalDateTime.now();
 
-            case "ECONOMY" -> {
-                if (inv.getEconomyAvailable() < seats) {
-                    throw new RuntimeException("Not enough economy seats");
+        //  Prevent deadlock
+        Collections.sort(seatNumbers);
+
+        List<String> redisKeys = new ArrayList<>();
+
+        try {
+
+            // Acquire short Redis locks
+            for (String seatNumber : seatNumbers) {
+
+                String key = "LOCK:flight:" + flightId + ":" + seatNumber;
+
+                Boolean locked = redisTemplate.opsForValue()
+                        .setIfAbsent(key, bookingId, Duration.ofSeconds(5));
+
+                if (Boolean.FALSE.equals(locked)) {
+                    throw new RuntimeException("Seat " + seatNumber + " is being processed");
                 }
-                inv.setEconomyAvailable(inv.getEconomyAvailable() - seats);
+
+                redisKeys.add(key);
             }
 
-            case "BUSINESS" -> {
-                if (inv.getBusinessAvailable() < seats) {
-                    throw new RuntimeException("Not enough business seats");
-                }
-                inv.setBusinessAvailable(inv.getBusinessAvailable() - seats);
+            //  DB Pessimistic Lock
+            List<SeatEntity> seats =
+                    seatsRepo.findByFlightIdAndSeatNumberIn(flightId, seatNumbers);
+
+            if (seats.size() != seatNumbers.size()) {
+                throw new RuntimeException("Some seats not found");
             }
 
-            default -> throw new IllegalArgumentException("Invalid seatType");
+            // Auto-release expired HOLD
+            for (SeatEntity seat : seats) {
+
+                if (seat.getStatus() == SeatStatus.HOLD &&
+                        seat.getHoldUntil() != null &&
+                        seat.getHoldUntil().isBefore(now)) {
+
+                    seat.setStatus(SeatStatus.AVAILABLE);
+                    seat.setHoldBy(null);
+                    seat.setHoldUntil(null);
+                }
+            }
+
+            //  Validate AVAILABLE
+            for (SeatEntity seat : seats) {
+                if (seat.getStatus() != SeatStatus.AVAILABLE) {
+                    throw new RuntimeException(
+                            "Seat " + seat.getSeatNumber() + " not available");
+                }
+            }
+
+            //  Mark HOLD
+            for (SeatEntity seat : seats) {
+                seat.setStatus(SeatStatus.HOLD);
+                seat.setHoldBy(bookingId);
+                seat.setHoldUntil(now.plusMinutes(15));
+            }
+
+            seatsRepo.saveAll(seats);
+
+        } finally {
+            for (String key : redisKeys) {
+                redisTemplate.delete(key);
+            }
         }
-        if (inv.getEconomyAvailable() < 0 || inv.getBusinessAvailable() < 0) {
-            throw new IllegalStateException("Seat invariant violated");
-        }
-
-        inventoryRepo.save(inv);
-
-        String holdKey = "HOLD:" + flightId + ":" + idempotencyKey;
-        String holdData = redisTemplate.opsForValue().get(holdKey);
-
-        redisTemplate.opsForValue()
-                .set(holdKey, seatType + ":" + seats, Duration.ofMinutes(15));
     }
 
+
+    // ================= CONFIRM SEATS =================
 
     @Transactional
     @Override
-    public void confirmSeats(String flightId, String seatType, int seats, String idempotencyKey) {
+    public void confirmSeats(SeatsActionDto dto) {
 
-        InventoryEntity inv = inventoryRepo.findById(Integer.valueOf(flightId))
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+        Integer flightId = dto.getFlightId();
+        List<String> seatNumbers = new ArrayList<>(dto.getSeatNumbers());
+        String bookingId = dto.getHoldBy();
 
-        switch (seatType.toUpperCase()) {
+        LocalDateTime now = LocalDateTime.now();
 
-            case "ECONOMY" -> inv.setEconomyBooked(inv.getEconomyBooked() + seats);
-            case "BUSINESS" -> inv.setBusinessBooked(inv.getBusinessBooked() + seats);
-            default -> throw new IllegalArgumentException("Invalid seatType");
+        // 🔥 Prevent deadlock
+        Collections.sort(seatNumbers);
+
+        // 1️⃣ DB Pessimistic Lock
+        List<SeatEntity> seats =
+                seatsRepo.findByFlightIdAndSeatNumberIn(flightId, seatNumbers);
+
+        if (seats.size() != seatNumbers.size()) {
+            throw new RuntimeException("Some seats not found");
         }
 
-        inventoryRepo.save(inv);
-        redisTemplate.delete("HOLD:" + flightId + ":" + idempotencyKey);
-        String holdKey = "HOLD:" + flightId + ":" + idempotencyKey;
+        // 2️⃣ Validate seats belong to booking and not expired
+        for (SeatEntity seat : seats) {
 
-        String holdData = redisTemplate.opsForValue().get(holdKey);
-        if (holdData == null) {
-            return;
+            if (seat.getStatus() != SeatStatus.HOLD) {
+                throw new RuntimeException(
+                        "Seat " + seat.getSeatNumber() + " is not on HOLD");
+            }
+
+            if (!bookingId.equals(seat.getHoldBy())) {
+                throw new RuntimeException(
+                        "Seat " + seat.getSeatNumber() + " does not belong to booking");
+            }
+
+            if (seat.getHoldUntil() == null || seat.getHoldUntil().isBefore(now)) {
+                throw new RuntimeException(
+                        "Seat " + seat.getSeatNumber() + " hold expired");
+            }
         }
+
+        // 3️⃣ Mark BOOKED
+        for (SeatEntity seat : seats) {
+            seat.setStatus(SeatStatus.BOOKED);
+            seat.setHoldBy(null);
+            seat.setHoldUntil(null);
+        }
+
+        seatsRepo.saveAll(seats);
     }
+
+    // ================= RELEASE SEATS =================
 
     @Transactional
     @Override
-    public void releaseSeats(String flightId, String seatType, int seats, String idempotencyKey) {
+    public void releaseSeats(SeatsActionDto dto) {
 
-        InventoryEntity inv = inventoryRepo.findById(Integer.valueOf(flightId))
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+        Integer flightId = dto.getFlightId();
+        List<String> seatNumbers = new ArrayList<>(dto.getSeatNumbers());
+        String bookingId = dto.getHoldBy();
 
-        switch (seatType.toUpperCase()) {
+        Collections.sort(seatNumbers);
 
-            case "ECONOMY" ->
-                    inv.setEconomyAvailable(inv.getEconomyAvailable() + seats);
+        // DB pessimistic lock
+        List<SeatEntity> seats =
+                seatsRepo.findByFlightIdAndSeatNumberIn(flightId, seatNumbers);
 
-            case "BUSINESS" ->
-                    inv.setBusinessAvailable(inv.getBusinessAvailable() + seats);
-
-            default -> throw new IllegalArgumentException("Invalid seatType");
+        if (seats.size() != seatNumbers.size()) {
+            throw new RuntimeException("Some seats not found");
         }
 
-        inventoryRepo.save(inv);
-        redisTemplate.delete("HOLD:" + flightId + ":" + idempotencyKey);
-        String holdKey = "HOLD:" + flightId + ":" + idempotencyKey;
+        for (SeatEntity seat : seats) {
 
-        String holdData = redisTemplate.opsForValue().get(holdKey);
-        if (holdData == null) {
-            return;
+            // Only release if this booking owns the hold
+            if (seat.getStatus() == SeatStatus.HOLD &&
+                    bookingId.equals(seat.getHoldBy())) {
+
+                seat.setStatus(SeatStatus.AVAILABLE);
+                seat.setHoldBy(null);
+                seat.setHoldUntil(null);
+            }
         }
+
+        seatsRepo.saveAll(seats);
     }
+    private void createSeatsForFlight(InventoryEntity flight) {
+
+        List<SeatEntity> seats = new ArrayList<>();
+
+        // Economy Seats
+        for (int i = 1; i <= flight.getEconomySeats(); i++) {
+
+            SeatEntity seat = SeatEntity.builder()
+                    .seatNumber("E" + i)
+                    .seatType(SeatsType.ECONOMY)
+                    .status(SeatStatus.AVAILABLE)
+                    .holdBy(null)
+                    .holdUntil(null)
+                    .flight(flight)
+                    .build();
+
+            seats.add(seat);
+        }
+
+        // Business Seats
+        for (int i = 1; i <= flight.getBusinessSeats(); i++) {
+
+            SeatEntity seat = SeatEntity.builder()
+                    .seatNumber("B" + i)
+                    .seatType(SeatsType.BUSINESS)
+                    .status(SeatStatus.AVAILABLE)
+                    .holdBy(null)
+                    .holdUntil(null)
+                    .flight(flight)
+                    .build();
+
+            seats.add(seat);
+        }
+
+        seatsRepo.saveAll(seats);
+    }
+
 }

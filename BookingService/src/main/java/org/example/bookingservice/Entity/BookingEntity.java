@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -45,5 +46,7 @@ public class BookingEntity {
     private Integer flightId;
 
     private BigDecimal amount;
+
+    private List<String> seatNumbers;
 
 }

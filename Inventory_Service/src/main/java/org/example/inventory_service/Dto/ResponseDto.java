@@ -25,10 +25,12 @@ public class ResponseDto {
 
     private int economySeats;
     private int economyAvailable;
+    private int economyBooked;
 
 
     private int businessSeats;
     private int businessAvailable;
+    private int businessBooked;
 
     private BigDecimal economyPrice;
 

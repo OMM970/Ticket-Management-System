@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.example.bookingservice.Enums.SeatsType;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -34,4 +35,7 @@ public class RequestDto {
 
     @NotNull(message = "flight-id is required")
     private Long flightId;
+
+    @NotNull(message = "Seat numbers are required")
+    private List<String> seatNumbers;
 }

@@ -23,4 +23,13 @@ public class BookingController {
         BookingResponseDto response = bookingService.createBooking(requestDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+
+    @PostMapping("/confirmBooking/{idempotencyKey}")
+    public ResponseEntity<?> confirmBooking(
+            @PathVariable String idempotencyKey
+    ){
+        BookingResponseDto response = bookingService.confirmBooking(idempotencyKey);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
 }

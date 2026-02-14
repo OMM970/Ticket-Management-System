@@ -20,12 +20,14 @@ public class PaymentEntity {
     @Id
     private String id;
 
+    private String idempotencyKey;
     private String bookingId;
     private String userId;
     private Double amount;
 
     private String razorpayOrderId;
     private String razorpayPaymentId;
+
 
     @Enumerated(EnumType.STRING)
     private Status status;

@@ -1,8 +1,8 @@
 package org.example.bookingservice.Feign;
 
 import org.example.bookingservice.Dto.BookingResponseDto;
-import org.example.bookingservice.Dto.Feign.HoldSeatRequest;
 import org.example.bookingservice.Dto.Feign.InventoryResponseDto;
+import org.example.bookingservice.Dto.Feign.SeatsActionDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +19,11 @@ public interface InventoryService {
     InventoryResponseDto getInventoryById(@PathVariable Long id);
 
     @PostMapping("/api/v1/admin/inventory/hold")
-    void holdSeats(@RequestBody HoldSeatRequest request);
+    void holdSeats(@RequestBody SeatsActionDto request);
 
     @PostMapping("/api/v1/admin/inventory/confirm")
-    void confirmSeats(@RequestBody HoldSeatRequest request);
+    void confirmSeats(@RequestBody SeatsActionDto request);
 
     @PostMapping("/api/v1/admin/inventory/release")
-    void releaseSeats(@RequestBody HoldSeatRequest request);
+    void releaseSeats(@RequestBody SeatsActionDto request);
 }

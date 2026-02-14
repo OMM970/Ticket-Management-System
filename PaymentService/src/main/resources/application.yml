@@ -19,3 +19,9 @@
   server:
     port: 8080
     address: 0.0.0.0
+  booking-service:
+    service:
+      name: ${BOOKING_SERVICE_NAME:bookingservice}
+      url: ${BOOKING_SERVICE_URL:http://localhost:2019}
+
+
