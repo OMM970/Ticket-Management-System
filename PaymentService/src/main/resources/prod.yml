@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: payment-service
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://mongo:27017/payment_db}
+
+server:
+  port: 8080
+  address: 0.0.0.0
+
+jwt:
+  payment:
+    secret: ${JWT_SECRET}
+    expiry-minutes: 10
+
+razorpay:
+  key:
+    id: ${RAZORPAY_KEY_ID}
+    secret: ${RAZORPAY_KEY_SECRET}
+  webhook:
+    secret: ${RAZORPAY_WEBHOOK_SECRET}
+
+booking-service:
+  service:
+    name: ${BOOKING_SERVICE_NAME:booking-service}
+    url: ${BOOKING_SERVICE_URL:http://booking:2019}

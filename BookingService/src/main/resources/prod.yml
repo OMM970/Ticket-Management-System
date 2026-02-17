@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: booking-service
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://mongo:27017/booking_db}
+
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000000
+
+  cache:
+    type: redis
+
+logging:
+  level:
+    root: INFO
+
+server:
+  port: 2019
+
+jwt:
+  payment:
+    secret: ${JWT_SECRET:120a815e74a9edf768ac8db1bf0de298ab694cf9b922afc45551eac4e0e7fd7a}
+    expiry-minutes: 10
+
+inventory:
+  service:
+    name: ${INVENTORY_SERVICE_NAME:inventory-service}
+    url: ${INVENTORY_SERVICE_URL:http://inventory:9090}

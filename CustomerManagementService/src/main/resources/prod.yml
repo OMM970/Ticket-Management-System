@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: customer-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/customer_service_FMS}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+server:
+  port: 8083
+
+jwt:
+  secret: ${JWT_SECRET:Q2hhbmdlVGhpc0pXVFNlY3JldEtleVRvQmVBdExlYXN0NjRCeXRlc0xvbmdBbmRTZWN1cmU=}
+  expiration-ms: 86400000

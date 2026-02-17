@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: gateway
+
+server:
+  port: 2000
+
+jwt:
+  secret: ${JWT_SECRET:Q2hhbmdlVGhpc0pXVFNlY3JldEtleVRvQmVBdExlYXN0NjRCeXRlc0xvbmdBbmRTZWN1cmU=}
+
+services:
+  routes:
+    inventory: ${INVENTORY_URL:http://inventory:9090}
+    customer: ${CUSTOMER_URL:http://customer:8083}
