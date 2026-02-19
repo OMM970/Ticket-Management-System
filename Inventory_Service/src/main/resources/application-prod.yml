@@ -11,8 +11,11 @@ spring:
     hibernate:
       ddl-auto: update
 
-  redis:
-    url: ${REDIS_URL}
+  data:
+    redis:
+      url: ${REDIS_URL}
+      ssl:
+        enabled: true
 
   cache:
     type: redis
