@@ -26,5 +26,5 @@ jwt:
 
 inventory:
   service:
-    url: ${INVENTORY_SERVICE_URL}
+    url: ${INVENTORY_SERVICE_URL:https://inventory-service-0iuz.onrender.com}
     name: ${INVENTORY_SERVICE_NAME:inventory-service}
