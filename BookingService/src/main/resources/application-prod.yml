@@ -4,12 +4,10 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb://mongo:27017/booking_db}
+      uri: ${MONGO_URI}
+    redis:
+      url: ${REDIS_URL}
 
-  redis:
-    host: ${REDIS_HOST:redis}
-    port: ${REDIS_PORT:6379}
-    timeout: 2000000
 
   cache:
     type: redis
@@ -19,7 +17,7 @@ logging:
     root: INFO
 
 server:
-  port: 2019
+  port: ${PORT:2019}
 
 jwt:
   payment:
@@ -28,5 +26,5 @@ jwt:
 
 inventory:
   service:
+    url: ${INVENTORY_SERVICE_URL}
     name: ${INVENTORY_SERVICE_NAME:inventory-service}
-    url: ${INVENTORY_SERVICE_URL:http://inventory:9090}
