@@ -11,5 +11,11 @@ spring:
     hibernate:
       ddl-auto: update
 
+  redis:
+    url: ${REDIS_URL}
+
+  cache:
+    type: redis
+
 server:
   port: ${PORT:9090}
