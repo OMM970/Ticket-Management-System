@@ -18,7 +18,7 @@ public class RazorPayConfig {
 
     @Bean
     public RazorpayClient razorpayClient() throws RazorpayException {
-        // This creates the bean that was "missing" earlier
+
         return new RazorpayClient(razorpayKeyId, razorpayKeySecret);
     }
 }

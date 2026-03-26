@@ -12,3 +12,4 @@ services:
   routes:
     inventory: http://localhost:9090
     customer: http://localhost:8083
+    bookings: http://localhost:2019

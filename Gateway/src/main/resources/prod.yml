@@ -12,3 +12,4 @@ services:
   routes:
     inventory: ${INVENTORY_URL:http://inventory:9090}
     customer: ${CUSTOMER_URL:http://customer:8083}
+    bookings: ${BOOKING_URL:http://bookings:2019}
