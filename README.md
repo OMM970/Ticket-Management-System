@@ -122,7 +122,7 @@ Payment gateway integration
 
 Frontend using React or Angular
 
-Admin dashboard for flight and booking management ......
+Admin dashboard for flight and booking management ............
 
 👨‍💻 Author
 
