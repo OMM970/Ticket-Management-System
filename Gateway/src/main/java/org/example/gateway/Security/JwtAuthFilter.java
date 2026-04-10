@@ -1,5 +1,6 @@
 package org.example.gateway.Security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -13,38 +14,47 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class JwtAuthFilter  implements GlobalFilter, Ordered {
+public class JwtAuthFilter implements GlobalFilter, Ordered {
+    @Value("${internal.api-key}")
+    private String internalApiKey;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
+                .filter(auth -> auth instanceof JwtAuthenticationToken)
                 .cast(JwtAuthenticationToken.class)
                 .flatMap(auth -> {
 
+                    try {
+                        Jwt jwt = auth.getToken();
 
-                    Jwt jwt = auth.getToken();
+                        String customerId = jwt.getSubject();
+                        String email = jwt.getClaim("email") != null ? jwt.getClaim("email") : "";
+                        String type = jwt.getClaim("type") != null ? jwt.getClaim("type") : "";
 
-                    String customerId = jwt.getSubject(); // sub
-                    String email = jwt.getClaim("email");
-                    String type = jwt.getClaim("type");
+                        ServerHttpRequest mutatedRequest =
+                                exchange.getRequest().mutate()
+                                        .header("X-Customer-Id", customerId)
+                                        .header("X-User-Email", email)
+                                        .header("X-User-Type", type)
+                                        .header("X-Api-Key", internalApiKey)
+                                        .build();
 
-                    ServerHttpRequest mutatedRequest =
-                            exchange.getRequest().mutate()
-                                    .header("X-Customer-Id", customerId)
-                                    .header("X-User-Email", email)
-                                    .header("X-User-Type", type)
-                                    .build();
+                        return chain.filter(
+                                exchange.mutate().request(mutatedRequest).build()
+                        );
 
-
-                    return chain.filter(
-                            exchange.mutate().request(mutatedRequest).build()
-                    );
-                });
+                    } catch (Exception e) {
+                        return chain.filter(exchange);
+                    }
+                })
+                .switchIfEmpty(chain.filter(exchange));
     }
 
     @Override
     public int getOrder() {
-        return -1;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
-
 }

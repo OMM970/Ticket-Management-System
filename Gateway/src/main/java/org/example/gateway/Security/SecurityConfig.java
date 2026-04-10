@@ -64,7 +64,7 @@
 
 
                     if (roles == null) {
-                        roles = List.of(); // 👈 prevents NPE
+                        roles = List.of(); 
                     }
 
 
