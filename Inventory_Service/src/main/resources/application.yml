@@ -10,3 +10,5 @@ spring:
       ddl-auto: update
 server:
   port: 9090
+internal:
+  api-key: Z3Vuc3d1bmdwcmVzaWRlbnRzdHJhbmdlcmxhc3Rk

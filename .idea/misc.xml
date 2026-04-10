@@ -10,7 +10,14 @@
         <option value="$PROJECT_DIR$/Notification-Service/pom.xml" />
         <option value="$PROJECT_DIR$/BookingService/pom.xml" />
         <option value="$PROJECT_DIR$/PaymentService/pom.xml" />
+        <option value="$PROJECT_DIR$/Library-Com/pom.xml" />
+        <option value="$PROJECT_DIR$/common-lib/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/Library-Com/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager">

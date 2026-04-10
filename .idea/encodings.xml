@@ -7,5 +7,6 @@
     <file url="file://$PROJECT_DIR$/Inventory_Service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Notification-Service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/PaymentService/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-lib/src/main/java" charset="UTF-8" />
   </component>
 </project>

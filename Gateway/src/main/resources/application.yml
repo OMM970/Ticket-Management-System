@@ -7,6 +7,8 @@ server:
 
 jwt:
   secret: Q2hhbmdlVGhpc0pXVFNlY3JldEtleVRvQmVBdExlYXN0NjRCeXRlc0xvbmdBbmRTZWN1cmU=
+internal:
+  api-key: Z3Vuc3d1bmdwcmVzaWRlbnRzdHJhbmdlcmxhc3Rk
 
 services:
   routes:
